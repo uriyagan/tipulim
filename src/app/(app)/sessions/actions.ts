@@ -6,6 +6,10 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import {
+  syncSessionToCalendar,
+  removeSessionFromCalendar,
+} from "@/lib/calendar/sync";
+import {
   sessionSchema,
   sessionUpdateSchema,
   noteSchema,
@@ -71,6 +75,8 @@ export async function createSessionAction(
     entityId: created.id,
   });
 
+  await syncSessionToCalendar(created.id).catch(() => {});
+
   revalidatePath("/calendar");
   revalidatePath(`/patients/${patientId}`);
   redirect(`/sessions/${created.id}`);
@@ -119,8 +125,48 @@ export async function updateSessionAction(
     entityId: sessionId,
   });
 
+  if (data.sessionDate || data.durationMin) {
+    await syncSessionToCalendar(sessionId).catch(() => {});
+  }
+
   revalidatePath(`/sessions/${sessionId}`);
   revalidatePath("/calendar");
+  return { ok: true };
+}
+
+// Calendar drag-and-drop rescheduling (PRD §12). Moves a session to a new
+// date/time and best-effort pushes the change to the external calendar.
+export async function rescheduleSessionAction(
+  sessionId: string,
+  isoDate: string,
+): Promise<FormState> {
+  const session = await requireSession();
+
+  const when = new Date(isoDate);
+  if (Number.isNaN(when.getTime())) return { error: "תאריך לא תקין" };
+
+  const owned = await prisma.therapySession.findFirst({
+    where: { id: sessionId, therapistId: session.sub },
+    select: { id: true },
+  });
+  if (!owned) return { error: "מפגש לא נמצא" };
+
+  await prisma.therapySession.update({
+    where: { id: sessionId },
+    data: { sessionDate: when },
+  });
+
+  await audit({
+    action: "session.update",
+    userId: session.sub,
+    entityType: "TherapySession",
+    entityId: sessionId,
+  });
+
+  await syncSessionToCalendar(sessionId).catch(() => {});
+
+  revalidatePath("/calendar");
+  revalidatePath(`/sessions/${sessionId}`);
   return { ok: true };
 }
 
@@ -128,11 +174,14 @@ export async function deleteSessionAction(sessionId: string): Promise<void> {
   const session = await requireSession();
   const owned = await prisma.therapySession.findFirst({
     where: { id: sessionId, therapistId: session.sub },
-    select: { patientId: true },
+    select: { patientId: true, externalCalendarId: true },
   });
   if (!owned) return;
 
   await prisma.therapySession.delete({ where: { id: sessionId } });
+  await removeSessionFromCalendar(session.sub, owned.externalCalendarId).catch(
+    () => {},
+  );
   await audit({
     action: "session.delete",
     userId: session.sub,

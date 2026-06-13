@@ -39,7 +39,33 @@ model User {
   sessions  TherapySession[]
   auditLogs AuditLog[]
 
+  calendarConnection CalendarConnection?
+
   @@index([role])
+}
+
+// ---------------------------------------------------------------------------
+// External calendar connection (PRD §12 — Google Calendar sync).
+// OAuth tokens are encrypted at rest (AES-256-GCM), like patient PII.
+// ---------------------------------------------------------------------------
+
+model CalendarConnection {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  provider     String @default("google")
+  // Encrypted OAuth tokens.
+  accessTokenEnc  String
+  refreshTokenEnc String?
+  expiresAt       DateTime?
+  // Target calendar id (e.g. "primary").
+  calendarId String @default("primary")
+  // Sync token for incremental pulls (Google Calendar API).
+  syncToken String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ---------------------------------------------------------------------------

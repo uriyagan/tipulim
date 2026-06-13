@@ -10,7 +10,7 @@ handling of sensitive personal data.
 
 ## Status
 
-Phases 1–2 are complete. What works end-to-end today:
+Phases 1–3 are complete. What works end-to-end today:
 
 - 🔐 **Auth** — email + password login, signed httpOnly session cookie,
   inactivity auto-logout (10 min), and **re-authentication** for sensitive
@@ -21,7 +21,11 @@ Phases 1–2 are complete. What works end-to-end today:
   **AES-256-GCM**; plaintext never touches the database.
 - 🗒️ **Sessions** — session-centric model with sequential per-patient
   numbering, status & invoice status, tags, reschedule, manual notes.
-- 🗓️ **Calendar** — agenda view grouped by day; FAB for quick session creation.
+- 🗓️ **Calendar** — full month/week/day grid with **drag-and-drop
+  rescheduling** (§12); FAB for quick session creation.
+- 🔄 **Google Calendar sync** — bi-directional (push on change + pull external
+  changes); OAuth tokens encrypted at rest. Gracefully disabled until
+  `GOOGLE_CLIENT_ID/SECRET` are configured.
 - 🧾 **Audit log** — every sensitive action is recorded as **metadata only**
   (no sensitive content, non-sensitive ids).
 - 🎙️ **AI voice → note (Gemini)** — record/upload a session, get a transient
@@ -33,9 +37,8 @@ Phases 1–2 are complete. What works end-to-end today:
 - 🌐 **Hebrew RTL**, mobile-first responsive UI.
 
 Deferred to later phases (scaffolding/interfaces already in the data model):
-longitudinal AI overview, full day/week/month calendar grid + drag-and-drop +
-Google Calendar sync, and the pluggable external invoice provider. See
-`docs/ROADMAP.md`.
+longitudinal AI overview, global search, the pluggable external invoice
+provider, multi-therapist tenancy and 2FA. See `docs/ROADMAP.md`.
 
 ## Tech stack
 

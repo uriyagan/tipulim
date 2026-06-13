@@ -40,10 +40,21 @@ Follow-ups: streaming/async job processing (currently synchronous within the
 request), session matching by date in the voice wizard, and moving Gemini calls
 to a dedicated worker service.
 
-## 🔜 Phase 3 — Scheduling & calendar
+## ✅ Phase 3 — Scheduling & calendar (done)
 
-- Full day/week/month grid with drag-and-drop rescheduling (§12).
-- Bi-directional Google Calendar sync (`externalCalendarId` already modeled).
+- Full **month / week / day** calendar grid (RTL, Hebrew), with prev/today/next
+  navigation and view switching (§12).
+- **Drag-and-drop rescheduling** — drag a session to another day (month) or
+  day+hour slot (week/day) → `rescheduleSessionAction` persists the new time.
+- **Google Calendar sync** (§12): pluggable `CalendarProvider` with a Google
+  REST implementation (OAuth + token refresh). Outbound — sessions are pushed on
+  create/update/reschedule/delete. Inbound — "pull changes" reconciles external
+  time changes back to local sessions. OAuth tokens encrypted at rest.
+- Connect/disconnect + manual pull UI at `/settings/calendar`; disabled with a
+  clear "not configured" state when `GOOGLE_CLIENT_ID/SECRET` are unset.
+
+Follow-ups: webhook/push-channel for real-time inbound sync (currently manual/
+on-demand pull), conflict resolution UI, and per-event two-way field mapping.
 
 ## 🔜 Phase 4 — Billing & search
 
