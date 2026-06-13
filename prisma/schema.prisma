@@ -2,8 +2,7 @@
 // Core design principle (PRD §4): the system is centered on the TherapySession entity.
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -41,8 +40,22 @@ model User {
   auditLogs AuditLog[]
 
   calendarConnection CalendarConnection?
+  resetTokens        PasswordResetToken[]
 
   @@index([role])
+}
+
+// Password reset tokens (PRD §15.1). Only a hash of the token is stored.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
 
 // ---------------------------------------------------------------------------

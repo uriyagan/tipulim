@@ -10,7 +10,7 @@ function secret(): Uint8Array {
   return new TextEncoder().encode(process.env.AUTH_SECRET ?? "");
 }
 
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/forgot", "/reset"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

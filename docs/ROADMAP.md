@@ -92,9 +92,16 @@ ranked search indexing.
 Follow-ups: full clinic-management UI (invite/manage therapists), recovery
 codes for 2FA, QR image rendering for enrollment, and off-site backup storage.
 
+## Deployment
+
+- **Cloudflare Workers** via OpenNext (`wrangler.jsonc`, `open-next.config.ts`).
+- **Supabase** Postgres via the Prisma `pg` driver adapter.
+- **Resend** for transactional email (password reset); console stub when unset.
+- CI: `.github/workflows/deploy.yml` runs migrations + build + deploy + secrets
+  on push (GitHub runners have DB + Cloudflare egress).
+
 ## Known follow-ups / hardening
 
-- Password reset via email (§15.1).
 - Rate limiting / lockout on failed logins.
 - Server-side enforcement that the idle window and re-auth window also gate
   long-lived RSC navigations (currently cookie-expiry + client timer).

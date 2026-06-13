@@ -67,6 +67,12 @@ function LoginForm() {
       <button type="submit" className="btn-primary w-full" disabled={pending}>
         {pending ? "מתחבר…" : "התחברות"}
       </button>
+
+      <div className="text-center">
+        <a href="/forgot" className="text-sm text-brand-600">
+          שכחת סיסמה?
+        </a>
+      </div>
     </form>
   );
 }

@@ -11,6 +11,15 @@ export const reauthSchema = z.object({
   password: z.string().min(1, "נדרשת סיסמה"),
 });
 
+export const forgotSchema = z.object({
+  email: z.string().email("כתובת אימייל לא תקינה"),
+});
+
+export const resetSchema = z.object({
+  token: z.string().min(10, "טוקן לא תקין"),
+  password: z.string().min(8, "סיסמה חייבת לכלול לפחות 8 תווים"),
+});
+
 export const patientSchema = z.object({
   fullName: z.string().trim().min(2, "נדרש שם מלא"),
   phone: z

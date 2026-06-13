@@ -8,6 +8,8 @@ export type AuditAction =
   | "auth.logout"
   | "auth.login_failed"
   | "auth.reauth"
+  | "auth.reset_request"
+  | "auth.reset_complete"
   | "patient.create"
   | "patient.update"
   | "patient.archive"
