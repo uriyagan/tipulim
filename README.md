@@ -10,8 +10,7 @@ handling of sensitive personal data.
 
 ## Status
 
-This is **Phase 1 — the foundation + core session-centric flow**. What works
-end-to-end today:
+Phases 1–2 are complete. What works end-to-end today:
 
 - 🔐 **Auth** — email + password login, signed httpOnly session cookie,
   inactivity auto-logout (10 min), and **re-authentication** for sensitive
@@ -25,12 +24,18 @@ end-to-end today:
 - 🗓️ **Calendar** — agenda view grouped by day; FAB for quick session creation.
 - 🧾 **Audit log** — every sensitive action is recorded as **metadata only**
   (no sensitive content, non-sensitive ids).
+- 🎙️ **AI voice → note (Gemini)** — record/upload a session, get a transient
+  transcript → structured note → interim summary; **audio & transcript are never
+  persisted** (§8, §16). Falls back to a deterministic offline stub when no API
+  key is set, so the flow is fully demoable.
+- ✨ **AI interim summary** (§10) and **AI-assisted session creation** from voice
+  with a **mandatory confirmation step** — nothing is auto-assigned (§7B, §22).
 - 🌐 **Hebrew RTL**, mobile-first responsive UI.
 
 Deferred to later phases (scaffolding/interfaces already in the data model):
-**AI voice → note** (Gemini), AI interim & longitudinal summaries, full
-day/week/month calendar grid + drag-and-drop + Google Calendar sync, and the
-pluggable external invoice provider. See `docs/ROADMAP.md`.
+longitudinal AI overview, full day/week/month calendar grid + drag-and-drop +
+Google Calendar sync, and the pluggable external invoice provider. See
+`docs/ROADMAP.md`.
 
 ## Tech stack
 

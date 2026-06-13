@@ -12,6 +12,9 @@ import {
 } from "@/lib/format";
 import NotesSection from "@/components/NotesSection";
 import SessionControls from "@/components/SessionControls";
+import VoiceNoteProcessor from "@/components/VoiceNoteProcessor";
+import AiSummaryPanel from "@/components/AiSummaryPanel";
+import { isAiConfigured } from "@/lib/ai";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +32,7 @@ export default async function SessionPage({
       patient: { select: { id: true, fullName: true } },
       notes: { orderBy: { createdAt: "desc" } },
       aiSummary: true,
+      aiJob: true,
     },
   });
   if (!therapySession) notFound();
@@ -71,8 +75,25 @@ export default async function SessionPage({
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Notes (core of the session) */}
-        <section className="card md:col-span-2">
-          <h2 className="mb-3 text-lg font-semibold">סיכומי מפגש</h2>
+        <section className="card md:col-span-2 space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">סיכומי מפגש</h2>
+            <div className="w-56">
+              <VoiceNoteProcessor sessionId={s.id} aiConfigured={isAiConfigured()} />
+            </div>
+          </div>
+
+          {s.aiJob?.status === "FAILED" && (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+              עיבוד ההקלטה האחרון נכשל. ניתן לנסות שוב.
+            </p>
+          )}
+          {s.status === "PROCESSING_AI" && (
+            <p className="rounded-lg bg-purple-50 px-3 py-2 text-sm text-purple-700">
+              מתבצע עיבוד AI…
+            </p>
+          )}
+
           <NotesSection
             sessionId={s.id}
             notes={s.notes.map((n) => ({
@@ -86,32 +107,24 @@ export default async function SessionPage({
         </section>
 
         <div className="space-y-6">
-          {/* AI summary placeholder (Phase 2, PRD §10) */}
-          {s.aiSummary && (
-            <section className="card">
-              <h2 className="mb-3 text-lg font-semibold">סיכום AI</h2>
-              <dl className="space-y-2 text-sm">
-                {s.aiSummary.keyTopics.length > 0 && (
-                  <div>
-                    <dt className="text-slate-500">נושאים מרכזיים</dt>
-                    <dd>{s.aiSummary.keyTopics.join(", ")}</dd>
-                  </div>
-                )}
-                {s.aiSummary.emotionalState && (
-                  <div>
-                    <dt className="text-slate-500">מצב רגשי</dt>
-                    <dd>{s.aiSummary.emotionalState}</dd>
-                  </div>
-                )}
-                {s.aiSummary.observations && (
-                  <div>
-                    <dt className="text-slate-500">תצפיות</dt>
-                    <dd>{s.aiSummary.observations}</dd>
-                  </div>
-                )}
-              </dl>
-            </section>
-          )}
+          {/* AI interim summary (PRD §10) */}
+          <section className="card">
+            <h2 className="mb-3 text-lg font-semibold">סיכום AI</h2>
+            <AiSummaryPanel
+              sessionId={s.id}
+              hasNotes={s.notes.length > 0}
+              summary={
+                s.aiSummary
+                  ? {
+                      keyTopics: s.aiSummary.keyTopics,
+                      emotionalState: s.aiSummary.emotionalState,
+                      progressIndicators: s.aiSummary.progressIndicators,
+                      observations: s.aiSummary.observations,
+                    }
+                  : null
+              }
+            />
+          </section>
 
           {/* Session details / controls */}
           <section className="card">

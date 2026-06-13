@@ -19,17 +19,26 @@ session-centric system, §4) first, then layer automation on a correct foundatio
 - Calendar agenda view + FAB (§18).
 - Hebrew RTL, mobile-first UI.
 
-## 🔜 Phase 2 — AI layer (Gemini)
+## ✅ Phase 2 — AI layer (Gemini) (done)
 
-- Voice recording upload → transient speech-to-text → Gemini summarization →
-  structured note; **delete audio + transcript immediately** (§8, §16).
-- `AiProcessingJob` lifecycle surfaced in the UI (`PROCESSING_AI` status).
+- AI provider abstraction (`src/lib/ai/`) with a Gemini REST implementation and
+  a deterministic **offline stub** used when `GEMINI_API_KEY` is unset, so the
+  whole workflow runs in dev/demo (§20 — isolated AI layer).
+- Voice recording upload/record → transient speech-to-text → Gemini
+  summarization → structured note; **audio + transcript held in memory only and
+  dropped immediately, never persisted** (§8, §16, §5.4).
+- `AiProcessingJob` lifecycle (`PENDING→TRANSCRIBING→SUMMARIZING→COMPLETED/
+  FAILED`) surfaced in the UI via `PROCESSING_AI` status.
 - AI interim session summary: key topics, emotional state, progress,
-  observations (§10) — model already present (`AiSummary`).
+  observations, with (re)generate control (§10).
 - AI-assisted session creation from voice with **mandatory confirmation UI** and
-  patient/session matching — never auto-assign (§7B, §19, §22).
-- Data minimization: strip direct identifiers before sending to Gemini (§15.5).
-- Isolated AI processing service (§20).
+  patient suggestion/matching — never auto-assign or auto-create (§7B, §19, §22).
+- Data minimization: prompts exclude identifiers/PII before sending to Gemini
+  (§15.5).
+
+Follow-ups: streaming/async job processing (currently synchronous within the
+request), session matching by date in the voice wizard, and moving Gemini calls
+to a dedicated worker service.
 
 ## 🔜 Phase 3 — Scheduling & calendar
 

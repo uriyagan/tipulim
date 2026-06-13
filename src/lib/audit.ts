@@ -20,7 +20,10 @@ export type AuditAction =
   | "session.delete"
   | "note.create"
   | "note.update"
-  | "note.delete";
+  | "note.delete"
+  | "ai.voice_process"
+  | "ai.voice_failed"
+  | "ai.summary_generate";
 
 export async function audit(params: {
   action: AuditAction;
