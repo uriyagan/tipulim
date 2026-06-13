@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { loginAction, type LoginState } from "./actions";
+import { loginAction, verifyTwoFactorAction, type LoginState } from "./actions";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -12,6 +12,10 @@ function LoginForm() {
     loginAction,
     {},
   );
+
+  if (state.twoFactorRequired) {
+    return <TwoFactorForm next={next} />;
+  }
 
   return (
     <form action={formAction} className="card w-full max-w-sm space-y-4">
@@ -62,6 +66,54 @@ function LoginForm() {
 
       <button type="submit" className="btn-primary w-full" disabled={pending}>
         {pending ? "מתחבר…" : "התחברות"}
+      </button>
+    </form>
+  );
+}
+
+function TwoFactorForm({ next }: { next: string }) {
+  const [state, formAction, pending] = useActionState<LoginState, FormData>(
+    verifyTwoFactorAction,
+    { twoFactorRequired: true },
+  );
+
+  return (
+    <form action={formAction} className="card w-full max-w-sm space-y-4">
+      <div className="text-center">
+        <h1 className="text-xl font-semibold text-slate-900">אימות דו‑שלבי</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          הזן/י את הקוד מאפליקציית האימות
+        </p>
+      </div>
+
+      <input type="hidden" name="next" value={next} />
+
+      <div>
+        <label className="label" htmlFor="code">
+          קוד אימות
+        </label>
+        <input
+          id="code"
+          name="code"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={6}
+          required
+          autoFocus
+          className="input text-center tracking-[0.5em]"
+          dir="ltr"
+          placeholder="000000"
+        />
+      </div>
+
+      {state.error && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          {state.error}
+        </p>
+      )}
+
+      <button type="submit" className="btn-primary w-full" disabled={pending}>
+        {pending ? "מאמת…" : "אימות"}
       </button>
     </form>
   );

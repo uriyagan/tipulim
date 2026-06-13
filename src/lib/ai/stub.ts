@@ -3,6 +3,7 @@ import type {
   InterimSummary,
   SessionIntent,
   StructuredNote,
+  TherapeuticOverview,
 } from "./types";
 
 // Deterministic, offline provider used when GEMINI_API_KEY is not configured.
@@ -44,6 +45,21 @@ ${STUB_BANNER}`,
       progressIndicators: "דיווח עצמי על שיפור בשבוע האחרון",
       observations:
         (noteText.trim().slice(0, 120) || "אין תוכן") + ` ${STUB_BANNER}`,
+    };
+  }
+
+  async therapeuticOverview(
+    sessions: { date: string; content: string }[],
+  ): Promise<TherapeuticOverview> {
+    return {
+      patterns: `נצפו דפוסים עקביים על פני ${sessions.length} מפגשים סביב התמודדות עם לחץ. ${STUB_BANNER}`,
+      recurringThemes: ["לחץ", "מערכות יחסים", "ויסות רגשי"],
+      progressTrends: "מגמת שיפור הדרגתית במצב הרוח ובאסטרטגיות ההתמודדות.",
+      unresolvedIssues: ["דפוסי שינה", "גבולות בעבודה"],
+      recommendations: [
+        "המשך עבודה על טכניקות ויסות",
+        "בחינת דפוסי שינה במפגש הבא",
+      ],
     };
   }
 

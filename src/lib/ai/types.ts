@@ -14,6 +14,15 @@ export interface InterimSummary {
   observations: string;
 }
 
+/** Longitudinal therapeutic overview across many sessions (PRD §11). */
+export interface TherapeuticOverview {
+  patterns: string;
+  recurringThemes: string[];
+  progressTrends: string;
+  unresolvedIssues: string[];
+  recommendations: string[];
+}
+
 /**
  * Intent extracted from a voice utterance for AI-assisted session creation
  * (PRD §7B). Only weak signals — never an authoritative assignment.
@@ -39,6 +48,11 @@ export interface AiProvider {
 
   /** Produces an interim, session-level summary from note text. */
   interimSummary(noteText: string): Promise<InterimSummary>;
+
+  /** Aggregates many sessions into a longitudinal overview (PRD §11). */
+  therapeuticOverview(
+    sessions: { date: string; content: string }[],
+  ): Promise<TherapeuticOverview>;
 
   /** Extracts patient-name / date intent from a short utterance (PRD §7B). */
   extractSessionIntent(transcript: string): Promise<SessionIntent>;

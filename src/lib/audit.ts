@@ -24,6 +24,7 @@ export type AuditAction =
   | "ai.voice_process"
   | "ai.voice_failed"
   | "ai.summary_generate"
+  | "ai.overview_generate"
   | "invoice.issue"
   | "invoice.status_update";
 

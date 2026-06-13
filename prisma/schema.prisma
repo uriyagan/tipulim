@@ -95,9 +95,28 @@ model Patient {
   updatedAt DateTime @updatedAt
 
   sessions TherapySession[]
+  overview AiPatientOverview?
 
   @@index([therapistId, status])
   @@index([fullName])
+}
+
+// Longitudinal AI therapeutic overview, cached per patient (PRD §11).
+model AiPatientOverview {
+  id        String  @id @default(cuid())
+  patientId String  @unique
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  patterns         String?
+  recurringThemes  String[] @default([])
+  progressTrends   String?
+  unresolvedIssues String[] @default([])
+  recommendations  String[] @default([])
+  // Number of sessions the overview was generated from.
+  sessionsCount Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ---------------------------------------------------------------------------

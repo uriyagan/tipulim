@@ -11,6 +11,7 @@ import {
 } from "@/lib/format";
 import PatientPersonalData from "@/components/PatientPersonalData";
 import PatientDangerActions from "@/components/PatientDangerActions";
+import PatientOverviewPanel from "@/components/PatientOverviewPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -29,9 +30,14 @@ export default async function PatientPage({
         orderBy: { sessionDate: "desc" },
         include: { _count: { select: { notes: true } } },
       },
+      overview: true,
     },
   });
   if (!patient) notFound();
+
+  const documentedSessions = patient.sessions.filter(
+    (s) => s._count.notes > 0,
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -61,6 +67,28 @@ export default async function PatientPage({
           </div>
         </div>
       </div>
+
+      {/* Longitudinal therapeutic overview (PRD §11) */}
+      <section className="card">
+        <h2 className="mb-3 text-lg font-semibold">סקירה טיפולית לאורך זמן</h2>
+        <PatientOverviewPanel
+          patientId={id}
+          documentedSessions={documentedSessions}
+          overview={
+            patient.overview
+              ? {
+                  patterns: patient.overview.patterns,
+                  recurringThemes: patient.overview.recurringThemes,
+                  progressTrends: patient.overview.progressTrends,
+                  unresolvedIssues: patient.overview.unresolvedIssues,
+                  recommendations: patient.overview.recommendations,
+                  sessionsCount: patient.overview.sessionsCount,
+                  updatedAt: patient.overview.updatedAt.toISOString(),
+                }
+              : null
+          }
+        />
+      </section>
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Sessions list (session-centric) */}

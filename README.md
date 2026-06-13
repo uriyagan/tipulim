@@ -10,7 +10,7 @@ handling of sensitive personal data.
 
 ## Status
 
-Phases 1–4 are complete. What works end-to-end today:
+All five build phases are complete. What works end-to-end today:
 
 - 🔐 **Auth** — email + password login, signed httpOnly session cookie,
   inactivity auto-logout (10 min), and **re-authentication** for sensitive
@@ -38,11 +38,16 @@ Phases 1–4 are complete. What works end-to-end today:
   key is set, so the flow is fully demoable.
 - ✨ **AI interim summary** (§10) and **AI-assisted session creation** from voice
   with a **mandatory confirmation step** — nothing is auto-assigned (§7B, §22).
+- 🧠 **Longitudinal AI overview** (§11) — aggregates a patient's sessions into
+  patterns, themes, trends and recommendations.
+- 🔑 **Two-factor auth** (TOTP, §15.1) and **RBAC** (§21) with per-role
+  permissions, ready for multi-therapist clinics.
+- 💾 **Encrypted backups & restore** (§17) — `npm run backup` / `npm run restore`.
 - 🌐 **Hebrew RTL**, mobile-first responsive UI.
 
-Deferred to later phases (scaffolding/interfaces already in the data model):
-longitudinal AI overview, multi-therapist tenancy/RBAC, 2FA, and automated
-encrypted backups. See `docs/ROADMAP.md`.
+See `docs/ROADMAP.md` for the phase-by-phase build log and remaining hardening
+follow-ups (password reset, login rate-limiting, recovery codes, off-site
+backup storage).
 
 ## Tech stack
 
@@ -96,17 +101,22 @@ npm run dev          # http://localhost:3000
 | `npm run prisma:migrate` | Create/apply dev migrations |
 | `npm run prisma:studio` | Browse the DB |
 | `npm run db:seed` | Seed demo data |
+| `npm run backup` | Encrypted `pg_dump` backup (+ prune by retention) |
+| `npm run restore -- <file>` | Decrypt and restore a backup |
 
 ## Security model (PRD §15)
 
 | Requirement | Implementation |
 | --- | --- |
-| Encryption at rest | `src/lib/crypto.ts` — AES-256-GCM on `Patient.phoneEnc` / `emailEnc` |
+| Encryption at rest | `src/lib/crypto.ts` — AES-256-GCM on `Patient.phoneEnc` / `emailEnc` (+ OAuth/2FA secrets) |
 | Auth | `src/lib/auth.ts` — signed JWT in httpOnly cookie |
+| Two-factor auth (TOTP) | `src/lib/totp.ts` — RFC 6238; enroll at `/settings/security` |
 | Idle auto-logout (10m) | `IdleLogout` client timer + sliding cookie expiry |
 | Re-auth for sensitive actions | `requireElevated()` + `ReauthDialog`; short elevation window |
+| RBAC | `src/lib/rbac.ts` — per-role permission matrix |
 | Audit logging (metadata only) | `src/lib/audit.ts` — no sensitive content, ids only |
-| Data minimization for AI | Planned; only structured text sent to Gemini (Phase 2) |
+| Data minimization for AI | Prompts exclude PII; only clinical text sent to Gemini |
+| Encrypted backups (§17) | `scripts/backup.ts` — AES-256-GCM, 30-day retention |
 
 ## Project layout
 

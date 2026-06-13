@@ -30,6 +30,9 @@ yarn-error.log*
 # prisma
 /prisma/*.db
 
+# encrypted db backups
+/backups
+
 # editor
 .vscode/*
 !.vscode/extensions.json

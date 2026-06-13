@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { encrypt } from "@/lib/crypto";
 import { requireSession, requireElevated } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
 import { audit } from "@/lib/audit";
 import { patientSchema } from "@/lib/validation";
 
@@ -15,6 +16,9 @@ export async function createPatientAction(
   formData: FormData,
 ): Promise<FormState> {
   const session = await requireSession();
+  if (!hasPermission(session.role, "patient.manage")) {
+    return { error: "אין הרשאה לניהול מטופלים" };
+  }
 
   const parsed = patientSchema.safeParse({
     fullName: formData.get("fullName"),

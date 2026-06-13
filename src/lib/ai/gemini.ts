@@ -3,13 +3,16 @@ import type {
   InterimSummary,
   SessionIntent,
   StructuredNote,
+  TherapeuticOverview,
 } from "./types";
 import {
   NOTE_SYSTEM,
   SUMMARY_SYSTEM,
+  OVERVIEW_SYSTEM,
   buildIntentPrompt,
   buildNotePrompt,
   buildSummaryPrompt,
+  buildOverviewPrompt,
 } from "./prompts";
 
 // Google Gemini provider via the REST API (no SDK dependency).
@@ -93,6 +96,16 @@ export class GeminiProvider implements AiProvider {
     return normalizeSummary(parseJson(raw));
   }
 
+  async therapeuticOverview(
+    sessions: { date: string; content: string }[],
+  ): Promise<TherapeuticOverview> {
+    const raw = await this.generate([{ text: buildOverviewPrompt(sessions) }], {
+      system: OVERVIEW_SYSTEM,
+      json: true,
+    });
+    return normalizeOverview(parseJson(raw));
+  }
+
   async extractSessionIntent(transcript: string): Promise<SessionIntent> {
     const raw = await this.generate([{ text: buildIntentPrompt(transcript) }], {
       json: true,
@@ -125,15 +138,30 @@ function parseJson(raw: string): unknown {
   }
 }
 
+function asStr(v: unknown): string {
+  return typeof v === "string" ? v : "";
+}
+function asStrArr(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((t): t is string => typeof t === "string") : [];
+}
+
 function normalizeSummary(obj: unknown): InterimSummary {
   const o = (obj ?? {}) as Record<string, unknown>;
-  const asStr = (v: unknown) => (typeof v === "string" ? v : "");
   return {
-    keyTopics: Array.isArray(o.keyTopics)
-      ? o.keyTopics.filter((t): t is string => typeof t === "string")
-      : [],
+    keyTopics: asStrArr(o.keyTopics),
     emotionalState: asStr(o.emotionalState),
     progressIndicators: asStr(o.progressIndicators),
     observations: asStr(o.observations),
+  };
+}
+
+function normalizeOverview(obj: unknown): TherapeuticOverview {
+  const o = (obj ?? {}) as Record<string, unknown>;
+  return {
+    patterns: asStr(o.patterns),
+    recurringThemes: asStrArr(o.recurringThemes),
+    progressTrends: asStr(o.progressTrends),
+    unresolvedIssues: asStrArr(o.unresolvedIssues),
+    recommendations: asStrArr(o.recommendations),
   };
 }

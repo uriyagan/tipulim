@@ -72,13 +72,25 @@ Follow-ups: invoice amounts/line-items, provider-specific adapters (e.g. Green
 Invoice), webhook signature (HMAC) instead of a shared secret, and full-text /
 ranked search indexing.
 
-## 🔜 Phase 5 — Longitudinal AI & SaaS
+## ✅ Phase 5 — Longitudinal AI, security & resilience (done)
 
-- AI therapeutic overview across sessions: patterns, themes, trends,
-  recommendations (§11).
-- Multi-therapist tenancy, clinic admin, full RBAC (§21) — `Role` and
-  per-therapist ownership already modeled.
-- 2FA (§15.1), automated encrypted backups & restore (§17).
+- **Longitudinal AI therapeutic overview** (§11): aggregates a patient's
+  documented sessions into patterns, recurring themes, progress trends,
+  unresolved issues and recommendations; cached per patient
+  (`AiPatientOverview`), with a (re)generate control on the patient page.
+- **Two-factor authentication** (§15.1): dependency-free TOTP (RFC 6238).
+  Enroll/disable at `/settings/security`; login gains a second step for
+  2FA-enabled accounts. The TOTP secret is encrypted at rest.
+- **RBAC** (§3.2, §21): permission matrix per role (`src/lib/rbac.ts`),
+  enforced in sensitive actions and surfaced at `/settings/account`. Clinic
+  admin / staff roles are modeled and ready for multi-therapist tenancy.
+- **Encrypted backups & restore** (§17): `npm run backup` runs `pg_dump`,
+  encrypts with AES-256-GCM, writes to the backups dir and prunes beyond the
+  retention window (default 30 days); `npm run restore -- <file>` decrypts and
+  applies. Schedule daily via cron.
+
+Follow-ups: full clinic-management UI (invite/manage therapists), recovery
+codes for 2FA, QR image rendering for enrollment, and off-site backup storage.
 
 ## Known follow-ups / hardening
 

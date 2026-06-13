@@ -30,6 +30,29 @@ ${noteText}
 """`;
 }
 
+export const OVERVIEW_SYSTEM = `אתה עוזר קליני המנתח מהלך טיפול לאורך זמן.
+החזר אך ורק JSON תקין לפי הסכימה המבוקשת, בעברית. אל תכלול מזהים אישיים.
+בסס את הניתוח אך ורק על התוכן שסופק.`;
+
+export function buildOverviewPrompt(
+  sessions: { date: string; content: string }[],
+): string {
+  const body = sessions
+    .map((s, i) => `מפגש ${i + 1} (${s.date}):\n${s.content}`)
+    .join("\n\n---\n\n");
+  return `נתח את מהלך הטיפול לאורך המפגשים הבאים והחזר JSON בלבד בשדות:
+patterns (מחרוזת — דפוסים מרכזיים),
+recurringThemes (מערך מחרוזות — נושאים חוזרים),
+progressTrends (מחרוזת — מגמות התקדמות),
+unresolvedIssues (מערך מחרוזות — סוגיות לא פתורות),
+recommendations (מערך מחרוזות — המלצות למפגשים הבאים).
+
+מפגשים:
+"""
+${body}
+"""`;
+}
+
 export function buildIntentPrompt(transcript: string): string {
   return `מתוך המשפט הקצר הבא, חלץ את שם המטופל ואת התאריך אם הוזכרו.
 החזר JSON בלבד: { "patientName": string|null, "date": string|null }
