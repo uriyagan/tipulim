@@ -56,12 +56,21 @@ to a dedicated worker service.
 Follow-ups: webhook/push-channel for real-time inbound sync (currently manual/
 on-demand pull), conflict resolution UI, and per-event two-way field mapping.
 
-## 🔜 Phase 4 — Billing & search
+## ✅ Phase 4 — Billing & search (done)
 
-- Pluggable external invoice provider; status webhooks → `invoiceStatus`
-  (`invoiceExternalId` already modeled) (§13).
-- Global search across patients/sessions/notes with sensitive-data restrictions
-  (§14).
+- **Pluggable external invoice provider** (`src/lib/invoice/`): generic HTTP
+  implementation + offline stub; **no internal billing engine** (§13).
+- Issue invoice per session → stores `invoiceExternalId` + status; status
+  **webhook** `POST /api/invoices/webhook` (shared-secret auth) maps the
+  provider's reference back to the session and updates `issued`/`viewed`.
+- **Global search** (§14) across patients / sessions / notes, scoped to the
+  therapist, with **no sensitive data in results** (encrypted PII never
+  returned; note matches return short snippets only). Search box in the nav and
+  a dedicated `/search` page.
+
+Follow-ups: invoice amounts/line-items, provider-specific adapters (e.g. Green
+Invoice), webhook signature (HMAC) instead of a shared secret, and full-text /
+ranked search indexing.
 
 ## 🔜 Phase 5 — Longitudinal AI & SaaS
 

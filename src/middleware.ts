@@ -46,6 +46,7 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Protect everything except Next internals, the auth API, and static assets.
-  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
+  // Protect pages. API routes self-authorize (session check or webhook secret),
+  // so exclude them here along with Next internals and static assets.
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

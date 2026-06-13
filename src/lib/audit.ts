@@ -23,7 +23,9 @@ export type AuditAction =
   | "note.delete"
   | "ai.voice_process"
   | "ai.voice_failed"
-  | "ai.summary_generate";
+  | "ai.summary_generate"
+  | "invoice.issue"
+  | "invoice.status_update";
 
 export async function audit(params: {
   action: AuditAction;

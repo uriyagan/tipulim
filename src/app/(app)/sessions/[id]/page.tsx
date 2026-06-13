@@ -8,13 +8,14 @@ import {
   toDatetimeLocal,
   SESSION_STATUS_LABELS,
   SESSION_STATUS_STYLES,
-  INVOICE_STATUS_LABELS,
 } from "@/lib/format";
 import NotesSection from "@/components/NotesSection";
 import SessionControls from "@/components/SessionControls";
 import VoiceNoteProcessor from "@/components/VoiceNoteProcessor";
 import AiSummaryPanel from "@/components/AiSummaryPanel";
+import InvoiceControls from "@/components/InvoiceControls";
 import { isAiConfigured } from "@/lib/ai";
+import { isInvoiceConfigured } from "@/lib/invoice";
 
 export const dynamic = "force-dynamic";
 
@@ -126,12 +127,19 @@ export default async function SessionPage({
             />
           </section>
 
+          {/* Invoicing (PRD §13) */}
+          <section className="card">
+            <h2 className="mb-3 text-lg font-semibold">חיוב</h2>
+            <InvoiceControls
+              sessionId={s.id}
+              invoiceStatus={s.invoiceStatus}
+              configured={isInvoiceConfigured()}
+            />
+          </section>
+
           {/* Session details / controls */}
           <section className="card">
             <h2 className="mb-3 text-lg font-semibold">פרטי מפגש</h2>
-            <p className="mb-3 text-sm text-slate-500">
-              חשבונית: {INVOICE_STATUS_LABELS[s.invoiceStatus]}
-            </p>
             <SessionControls
               sessionId={s.id}
               sessionDate={toDatetimeLocal(s.sessionDate)}

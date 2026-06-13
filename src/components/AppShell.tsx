@@ -10,6 +10,7 @@ const NAV = [
   { href: "/dashboard", label: "לוח בקרה", icon: "🏠" },
   { href: "/calendar", label: "יומן", icon: "🗓️" },
   { href: "/patients", label: "מטופלים", icon: "👤" },
+  { href: "/search", label: "חיפוש", icon: "🔍" },
 ];
 
 export default function AppShell({
@@ -39,6 +40,15 @@ export default function AppShell({
           </div>
           <div className="mt-1 truncate text-xs text-slate-500">{userName}</div>
         </div>
+        <form action="/search" className="p-3 pb-0">
+          <input
+            type="search"
+            name="q"
+            placeholder="חיפוש…"
+            className="input text-sm"
+            aria-label="חיפוש"
+          />
+        </form>
         <nav className="flex-1 space-y-1 p-3">
           {NAV.map((item) => (
             <Link

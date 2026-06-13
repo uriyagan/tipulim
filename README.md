@@ -10,7 +10,7 @@ handling of sensitive personal data.
 
 ## Status
 
-Phases 1–3 are complete. What works end-to-end today:
+Phases 1–4 are complete. What works end-to-end today:
 
 - 🔐 **Auth** — email + password login, signed httpOnly session cookie,
   inactivity auto-logout (10 min), and **re-authentication** for sensitive
@@ -26,6 +26,10 @@ Phases 1–3 are complete. What works end-to-end today:
 - 🔄 **Google Calendar sync** — bi-directional (push on change + pull external
   changes); OAuth tokens encrypted at rest. Gracefully disabled until
   `GOOGLE_CLIENT_ID/SECRET` are configured.
+- 🧾 **External invoicing** (§13) — pluggable provider (no internal billing);
+  issue per session + status webhook (`issued`/`viewed`). Offline stub by default.
+- 🔎 **Global search** (§14) across patients, sessions and notes, scoped to the
+  therapist, with no sensitive data in results.
 - 🧾 **Audit log** — every sensitive action is recorded as **metadata only**
   (no sensitive content, non-sensitive ids).
 - 🎙️ **AI voice → note (Gemini)** — record/upload a session, get a transient
@@ -37,8 +41,8 @@ Phases 1–3 are complete. What works end-to-end today:
 - 🌐 **Hebrew RTL**, mobile-first responsive UI.
 
 Deferred to later phases (scaffolding/interfaces already in the data model):
-longitudinal AI overview, global search, the pluggable external invoice
-provider, multi-therapist tenancy and 2FA. See `docs/ROADMAP.md`.
+longitudinal AI overview, multi-therapist tenancy/RBAC, 2FA, and automated
+encrypted backups. See `docs/ROADMAP.md`.
 
 ## Tech stack
 
