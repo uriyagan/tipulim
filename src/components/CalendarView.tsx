@@ -99,13 +99,13 @@ export default function CalendarView({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-1">
           <button className="btn-secondary" onClick={() => shift(-1)}>
-            ›
+            ‹
           </button>
           <button className="btn-secondary" onClick={() => navigate(view, new Date())}>
             היום
           </button>
           <button className="btn-secondary" onClick={() => shift(1)}>
-            ‹
+            ›
           </button>
         </div>
         <div className="flex gap-1">

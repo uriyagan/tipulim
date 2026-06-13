@@ -30,7 +30,7 @@ export default async function CalendarSettingsPage({
           סנכרון Google Calendar
         </h1>
         <p className="text-sm text-slate-500">
-          סנכרון דו‑כיווני של מפגשים עם יומן Google (§12).
+          סנכרון דו‑כיווני של מפגשים עם יומן Google.
         </p>
       </div>
 

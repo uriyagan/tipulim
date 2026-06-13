@@ -19,7 +19,7 @@ export default async function SecuritySettingsPage() {
           ← חזרה
         </Link>
         <h1 className="mt-2 text-2xl font-bold text-slate-900">אבטחה</h1>
-        <p className="text-sm text-slate-500">הגדרות אבטחת החשבון (§15.1).</p>
+        <p className="text-sm text-slate-500">הגדרות אבטחת החשבון.</p>
       </div>
 
       <section className="card">

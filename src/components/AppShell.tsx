@@ -10,7 +10,6 @@ const NAV = [
   { href: "/dashboard", label: "לוח בקרה", icon: "🏠" },
   { href: "/calendar", label: "יומן", icon: "🗓️" },
   { href: "/patients", label: "מטופלים", icon: "👤" },
-  { href: "/search", label: "חיפוש", icon: "🔍" },
 ];
 
 export default function AppShell({
