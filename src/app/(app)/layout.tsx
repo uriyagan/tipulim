@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getSession, authConfig, refreshSession } from "@/lib/auth";
+import { getSession, authConfig } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import AppShell from "@/components/AppShell";
 
@@ -11,8 +11,8 @@ export default async function AppLayout({
   const session = await getSession();
   if (!session) redirect("/login");
 
-  // Slide the idle window forward on navigation activity (PRD §15.2).
-  await refreshSession();
+  // Idle-window sliding (PRD §15.2) happens in middleware — cookies cannot be
+  // mutated during a server-component render.
 
   const user = await prisma.user.findUnique({
     where: { id: session.sub },
