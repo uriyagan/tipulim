@@ -2,7 +2,8 @@
 // Core design principle (PRD §4): the system is centered on the TherapySession entity.
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {

@@ -33,6 +33,12 @@ yarn-error.log*
 # encrypted db backups
 /backups
 
+# cloudflare / opennext
+/.open-next
+/.wrangler
+.dev.vars
+cloudflare-env.d.ts
+
 # editor
 .vscode/*
 !.vscode/extensions.json

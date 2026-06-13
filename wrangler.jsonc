@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "haclinica",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-03-25",
+  // Required by OpenNext: enables Node.js APIs (crypto, net, etc.) on Workers.
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  }
+  // Secrets/vars (DATABASE_URL, AUTH_SECRET, ENCRYPTION_KEY, GEMINI_API_KEY,
+  // GOOGLE_*, INVOICE_*) are set in the Cloudflare dashboard or via
+  // `wrangler secret put <NAME>` — never commit them here.
+}
