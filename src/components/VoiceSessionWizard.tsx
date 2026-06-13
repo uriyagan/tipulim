@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import AudioRecorder from "./AudioRecorder";
+import HebrewDateTime from "./HebrewDateTime";
 import {
   extractVoiceIntentAction,
   type VoiceIntentResult,
@@ -13,7 +14,6 @@ import { createSessionAction } from "@/app/(app)/sessions/actions";
 // a patient and date; a session is created only after the therapist explicitly
 // confirms. Nothing is auto-assigned or auto-created.
 export default function VoiceSessionWizard({ aiConfigured }: { aiConfigured: boolean }) {
-  const [blob, setBlob] = useState<Blob | null>(null);
   const [result, setResult] = useState<VoiceIntentResult | null>(null);
   const [analyzing, startAnalyze] = useTransition();
   const [creating, startCreate] = useTransition();
@@ -22,12 +22,13 @@ export default function VoiceSessionWizard({ aiConfigured }: { aiConfigured: boo
   const [selectedPatient, setSelectedPatient] = useState<string>("");
   const [date, setDate] = useState<string>("");
 
-  const analyze = () => {
-    if (!blob) return;
+  // Runs as soon as the recording stops — no separate "analyze" step.
+  const analyze = (audio: Blob) => {
     setError(null);
+    setResult(null);
     startAnalyze(async () => {
       const fd = new FormData();
-      fd.append("audio", blob, "recording.webm");
+      fd.append("audio", audio, "recording.webm");
       const res = await extractVoiceIntentAction({}, fd);
       if (res.error) {
         setError(res.error);
@@ -46,7 +47,6 @@ export default function VoiceSessionWizard({ aiConfigured }: { aiConfigured: boo
       const fd = new FormData();
       fd.append("patientId", selectedPatient);
       fd.append("sessionDate", date);
-      fd.append("durationMin", "50");
       const res = await createSessionAction({}, fd);
       // On success the action redirects to the new session.
       if (res?.error) setError(res.error);
@@ -66,10 +66,15 @@ export default function VoiceSessionWizard({ aiConfigured }: { aiConfigured: boo
         <p className="text-sm text-slate-500">
           הקלט/י משפט קצר, למשל: ״ישראל ישראלי, מפגש, 06.06.2026״.
         </p>
-        <AudioRecorder onAudio={setBlob} disabled={analyzing} />
-        <button className="btn-primary" onClick={analyze} disabled={!blob || analyzing}>
-          {analyzing ? "מנתח…" : "נתח הקלטה"}
-        </button>
+        <AudioRecorder
+          onAudio={() => {}}
+          onComplete={analyze}
+          disabled={analyzing}
+          startLabel="🎙️ התחלת הקלטה"
+          stopLabel="סיום הקלטה ושמירה"
+          showPreview={false}
+        />
+        {analyzing && <p className="text-sm text-slate-500">מנתח הקלטה…</p>}
       </section>
 
       {error && <p className="text-sm text-red-700">{error}</p>}
@@ -128,16 +133,8 @@ export default function VoiceSessionWizard({ aiConfigured }: { aiConfigured: boo
           </div>
 
           <div>
-            <label className="label" htmlFor="vdate">
-              תאריך ושעה
-            </label>
-            <input
-              id="vdate"
-              type="datetime-local"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="input"
-            />
+            <label className="label">תאריך ושעה</label>
+            <HebrewDateTime value={date} onChange={setDate} />
           </div>
 
           <button

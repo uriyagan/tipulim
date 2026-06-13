@@ -2,15 +2,24 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// Reusable audio capture: records via MediaRecorder or accepts an uploaded
-// file. Produces a Blob via `onAudio`. The blob is held in memory only and is
-// the caller's responsibility to submit (and never persist — PRD §16).
+// Reusable audio capture: records via MediaRecorder (in-system only — no file
+// upload). Produces a Blob via `onAudio`, and optionally fires `onComplete`
+// once a recording finishes so callers can advance automatically. The blob is
+// held in memory only and must never be persisted (PRD §16).
 export default function AudioRecorder({
   onAudio,
+  onComplete,
   disabled,
+  startLabel = "🎙️ התחל הקלטה",
+  stopLabel = "עצור הקלטה",
+  showPreview = true,
 }: {
   onAudio: (blob: Blob | null) => void;
+  onComplete?: (blob: Blob) => void;
   disabled?: boolean;
+  startLabel?: string;
+  stopLabel?: string;
+  showPreview?: boolean;
 }) {
   const [recording, setRecording] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -49,6 +58,7 @@ export default function AudioRecorder({
         });
         setBlob(blob);
         stream.getTracks().forEach((t) => t.stop());
+        onComplete?.(blob);
       };
       recorder.start();
       recorderRef.current = recorder;
@@ -56,7 +66,7 @@ export default function AudioRecorder({
       setElapsed(0);
       timerRef.current = setInterval(() => setElapsed((e) => e + 1), 1000);
     } catch {
-      setError("לא ניתן לגשת למיקרופון. ניתן להעלות קובץ במקום.");
+      setError("לא ניתן לגשת למיקרופון. יש לאשר גישה למיקרופון בדפדפן.");
     }
   };
 
@@ -71,40 +81,28 @@ export default function AudioRecorder({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
-        {!recording ? (
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={start}
-            disabled={disabled}
-          >
-            🎙️ התחל הקלטה
-          </button>
-        ) : (
-          <button type="button" className="btn-danger" onClick={stop}>
-            ⏹️ עצור ({mm}:{ss})
-          </button>
-        )}
-
-        <label className="btn-secondary cursor-pointer">
-          📁 העלאת קובץ
-          <input
-            type="file"
-            accept="audio/*"
-            className="hidden"
-            disabled={disabled}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) setBlob(f);
-            }}
-          />
-        </label>
-      </div>
+      {!recording ? (
+        <button
+          type="button"
+          className="btn-primary w-full justify-center py-4 text-lg"
+          onClick={start}
+          disabled={disabled}
+        >
+          {startLabel}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="btn-danger w-full justify-center py-4 text-lg"
+          onClick={stop}
+        >
+          ⏹️ {stopLabel} ({mm}:{ss})
+        </button>
+      )}
 
       {error && <p className="text-sm text-red-700">{error}</p>}
 
-      {previewUrl && (
+      {showPreview && previewUrl && (
         <div className="flex items-center gap-3">
           <audio controls src={previewUrl} className="h-9" />
           <button

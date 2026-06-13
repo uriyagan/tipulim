@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSessionAction, type FormState } from "@/app/(app)/sessions/actions";
+import HebrewDateTime from "./HebrewDateTime";
 
 export default function SessionForm({
   patients,
@@ -14,6 +15,7 @@ export default function SessionForm({
   defaultDate: string;
 }) {
   const router = useRouter();
+  const [date, setDate] = useState(defaultDate);
   const [state, formAction, pending] = useActionState<FormState, FormData>(
     createSessionAction,
     {},
@@ -49,41 +51,9 @@ export default function SessionForm({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="label" htmlFor="sessionDate">
-            תאריך ושעה
-          </label>
-          <input
-            id="sessionDate"
-            name="sessionDate"
-            type="datetime-local"
-            required
-            defaultValue={defaultDate}
-            className="input"
-          />
-        </div>
-        <div>
-          <label className="label" htmlFor="durationMin">
-            משך (דקות)
-          </label>
-          <input
-            id="durationMin"
-            name="durationMin"
-            type="number"
-            min={5}
-            max={600}
-            defaultValue={50}
-            className="input"
-          />
-        </div>
-      </div>
-
       <div>
-        <label className="label" htmlFor="tags">
-          תגיות (מופרדות בפסיק)
-        </label>
-        <input id="tags" name="tags" className="input" placeholder="לדוגמה: התחלה, מעקב" />
+        <label className="label">תאריך ושעה</label>
+        <HebrewDateTime name="sessionDate" value={date} onChange={setDate} />
       </div>
 
       {state.error && (
