@@ -96,6 +96,11 @@ enum PatientStatus {
 
 model Patient {
   id        String        @id @default(cuid())
+  // Stored separately so lists/calendar/search can show "first + last initial"
+  // while the full name stays hidden until re-authentication.
+  firstName String
+  lastName  String
+  // Full name retained for the re-auth-gated personal view, search and sort.
   fullName  String
   // Encrypted (AES-256-GCM) blobs — never stored in plaintext.
   phoneEnc  String?

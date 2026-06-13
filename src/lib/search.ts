@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { patientDisplayName } from "@/lib/format";
 
 // Global search (PRD §14), scoped to the requesting therapist. Results never
 // expose sensitive data: patient phone/email are encrypted and never returned,
@@ -42,7 +43,7 @@ export async function searchAll(
         therapistId,
         fullName: { contains: q, mode: "insensitive" },
       },
-      select: { id: true, fullName: true, status: true },
+      select: { id: true, firstName: true, lastName: true, status: true },
       take: 10,
       orderBy: { fullName: "asc" },
     }),
@@ -60,7 +61,7 @@ export async function searchAll(
         sessionNumber: true,
         sessionDate: true,
         status: true,
-        patient: { select: { fullName: true } },
+        patient: { select: { firstName: true, lastName: true } },
       },
       take: 15,
       orderBy: { sessionDate: "desc" },
@@ -73,7 +74,7 @@ export async function searchAll(
       select: {
         content: true,
         sessionId: true,
-        session: { select: { patient: { select: { fullName: true } } } },
+        session: { select: { patient: { select: { firstName: true, lastName: true } } } },
       },
       take: 15,
       orderBy: { createdAt: "desc" },
@@ -81,17 +82,21 @@ export async function searchAll(
   ]);
 
   return {
-    patients,
+    patients: patients.map((p) => ({
+      id: p.id,
+      fullName: patientDisplayName(p),
+      status: p.status,
+    })),
     sessions: sessions.map((s) => ({
       id: s.id,
-      patientName: s.patient.fullName,
+      patientName: patientDisplayName(s.patient),
       sessionNumber: s.sessionNumber,
       sessionDate: s.sessionDate,
       status: s.status,
     })),
     notes: notes.map((n) => ({
       sessionId: n.sessionId,
-      patientName: n.session.patient.fullName,
+      patientName: patientDisplayName(n.session.patient),
       snippet: snippet(n.content, q),
     })),
   };

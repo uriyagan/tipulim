@@ -21,7 +21,8 @@ export const resetSchema = z.object({
 });
 
 export const patientSchema = z.object({
-  fullName: z.string().trim().min(2, "נדרש שם מלא"),
+  firstName: z.string().trim().min(1, "נדרש שם פרטי"),
+  lastName: z.string().trim().min(1, "נדרש שם משפחה"),
   phone: z
     .string()
     .trim()

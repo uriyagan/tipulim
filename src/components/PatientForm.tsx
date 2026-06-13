@@ -15,7 +15,7 @@ export default function PatientForm({
   requiresReauth = false,
 }: {
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
-  initial?: { fullName: string; phone?: string; email?: string };
+  initial?: { firstName: string; lastName: string; phone?: string; email?: string };
   submitLabel: string;
   requiresReauth?: boolean;
 }) {
@@ -36,17 +36,31 @@ export default function PatientForm({
         if (requiresReauth) setShowReauth((v) => v); // no-op, dialog driven by state
       }}
     >
-      <div>
-        <label className="label" htmlFor="fullName">
-          שם מלא
-        </label>
-        <input
-          id="fullName"
-          name="fullName"
-          required
-          defaultValue={initial?.fullName ?? ""}
-          className="input"
-        />
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="label" htmlFor="firstName">
+            שם פרטי
+          </label>
+          <input
+            id="firstName"
+            name="firstName"
+            required
+            defaultValue={initial?.firstName ?? ""}
+            className="input"
+          />
+        </div>
+        <div>
+          <label className="label" htmlFor="lastName">
+            שם משפחה
+          </label>
+          <input
+            id="lastName"
+            name="lastName"
+            required
+            defaultValue={initial?.lastName ?? ""}
+            className="input"
+          />
+        </div>
       </div>
 
       <div>

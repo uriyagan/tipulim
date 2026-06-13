@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { toDatetimeLocal } from "@/lib/format";
+import { toDatetimeLocal, patientDisplayName } from "@/lib/format";
 import SessionForm from "@/components/SessionForm";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export default async function NewSessionPage({
   const patients = await prisma.patient.findMany({
     where: { therapistId: session.sub, status: "ACTIVE" },
     orderBy: { fullName: "asc" },
-    select: { id: true, fullName: true },
+    select: { id: true, firstName: true, lastName: true },
   });
 
   return (
@@ -32,7 +32,7 @@ export default async function NewSessionPage({
         </Link>
       </div>
       <SessionForm
-        patients={patients}
+        patients={patients.map((p) => ({ id: p.id, fullName: patientDisplayName(p) }))}
         defaultPatientId={patientId}
         defaultDate={toDatetimeLocal(new Date())}
       />

@@ -6,7 +6,7 @@ import { decrypt } from "@/lib/crypto";
 import { audit } from "@/lib/audit";
 
 export type PersonalData =
-  | { ok: true; phone: string | null; email: string | null }
+  | { ok: true; fullName: string; phone: string | null; email: string | null }
   | { ok: false; reason: "REAUTH_REQUIRED" | "NOT_FOUND" };
 
 // Returns decrypted personal data ONLY when the session is currently elevated
@@ -23,7 +23,7 @@ export async function getPatientPersonalData(
 
   const patient = await prisma.patient.findFirst({
     where: { id: patientId, therapistId: session.sub },
-    select: { phoneEnc: true, emailEnc: true },
+    select: { fullName: true, phoneEnc: true, emailEnc: true },
   });
   if (!patient) return { ok: false, reason: "NOT_FOUND" };
 
@@ -36,6 +36,7 @@ export async function getPatientPersonalData(
 
   return {
     ok: true,
+    fullName: patient.fullName,
     phone: decrypt(patient.phoneEnc),
     email: decrypt(patient.emailEnc),
   };

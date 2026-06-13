@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import {
   formatTime,
   formatDate,
+  patientDisplayName,
   SESSION_STATUS_LABELS,
   SESSION_STATUS_STYLES,
 } from "@/lib/format";
@@ -27,13 +28,13 @@ export default async function DashboardPage() {
         sessionDate: { gte: startOfDay, lte: endOfDay },
       },
       orderBy: { sessionDate: "asc" },
-      include: { patient: { select: { fullName: true } } },
+      include: { patient: { select: { firstName: true, lastName: true } } },
     }),
     prisma.therapySession.findMany({
       where: { therapistId, sessionDate: { gt: endOfDay } },
       orderBy: { sessionDate: "asc" },
       take: 5,
-      include: { patient: { select: { fullName: true } } },
+      include: { patient: { select: { firstName: true, lastName: true } } },
     }),
     prisma.therapySession.count({
       where: { therapistId, status: "MISSING_NOTE" },
@@ -71,7 +72,7 @@ export default async function DashboardPage() {
               <SessionRow
                 key={s.id}
                 id={s.id}
-                name={s.patient.fullName}
+                name={patientDisplayName(s.patient)}
                 number={s.sessionNumber}
                 time={formatTime(s.sessionDate)}
                 status={s.status}
@@ -92,7 +93,7 @@ export default async function DashboardPage() {
               <SessionRow
                 key={s.id}
                 id={s.id}
-                name={s.patient.fullName}
+                name={patientDisplayName(s.patient)}
                 number={s.sessionNumber}
                 time={`${formatDate(s.sessionDate)} · ${formatTime(s.sessionDate)}`}
                 status={s.status}

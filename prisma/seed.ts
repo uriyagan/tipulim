@@ -48,6 +48,8 @@ async function main() {
 
   const patient = await prisma.patient.create({
     data: {
+      firstName: "ישראל",
+      lastName: "ישראלי",
       fullName: "ישראל ישראלי",
       phoneEnc: encrypt("050-1234567"),
       emailEnc: encrypt("israel@example.com"),

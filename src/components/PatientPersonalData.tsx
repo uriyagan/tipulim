@@ -12,6 +12,7 @@ export default function PatientPersonalData({
   patientId: string;
 }) {
   const [data, setData] = useState<{
+    fullName: string;
     phone: string | null;
     email: string | null;
   } | null>(null);
@@ -25,7 +26,7 @@ export default function PatientPersonalData({
     const res = await getPatientPersonalData(patientId);
     setLoading(false);
     if (res.ok) {
-      setData({ phone: res.phone, email: res.email });
+      setData({ fullName: res.fullName, phone: res.phone, email: res.email });
       return true;
     }
     if (res.reason === "REAUTH_REQUIRED") {
@@ -39,6 +40,10 @@ export default function PatientPersonalData({
   if (data) {
     return (
       <dl className="space-y-2 text-sm">
+        <div className="flex gap-2">
+          <dt className="w-20 text-slate-500">שם מלא</dt>
+          <dd className="font-medium">{data.fullName}</dd>
+        </div>
         <div className="flex gap-2">
           <dt className="w-20 text-slate-500">טלפון</dt>
           <dd dir="ltr" className="font-medium">

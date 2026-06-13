@@ -21,18 +21,21 @@ export async function createPatientAction(
   }
 
   const parsed = patientSchema.safeParse({
-    fullName: formData.get("fullName"),
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
     phone: formData.get("phone"),
     email: formData.get("email"),
   });
   if (!parsed.success) {
     return { error: parsed.error.errors[0]?.message ?? "קלט לא תקין" };
   }
-  const { fullName, phone, email } = parsed.data;
+  const { firstName, lastName, phone, email } = parsed.data;
 
   const patient = await prisma.patient.create({
     data: {
-      fullName,
+      firstName,
+      lastName,
+      fullName: `${firstName} ${lastName}`.trim(),
       phoneEnc: encrypt(phone || null),
       emailEnc: encrypt(email || null),
       therapistId: session.sub,
@@ -64,14 +67,15 @@ export async function updatePatientAction(
   }
 
   const parsed = patientSchema.safeParse({
-    fullName: formData.get("fullName"),
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
     phone: formData.get("phone"),
     email: formData.get("email"),
   });
   if (!parsed.success) {
     return { error: parsed.error.errors[0]?.message ?? "קלט לא תקין" };
   }
-  const { fullName, phone, email } = parsed.data;
+  const { firstName, lastName, phone, email } = parsed.data;
 
   const existing = await prisma.patient.findFirst({
     where: { id: patientId, therapistId: session.sub },
@@ -81,7 +85,9 @@ export async function updatePatientAction(
   await prisma.patient.update({
     where: { id: patientId },
     data: {
-      fullName,
+      firstName,
+      lastName,
+      fullName: `${firstName} ${lastName}`.trim(),
       phoneEnc: encrypt(phone || null),
       emailEnc: encrypt(email || null),
     },

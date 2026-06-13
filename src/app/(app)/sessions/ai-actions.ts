@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { getAiProvider } from "@/lib/ai";
+import { patientDisplayName } from "@/lib/format";
 
 export type AiActionState = { error?: string; ok?: boolean };
 
@@ -196,17 +197,22 @@ export async function extractVoiceIntentAction(
     const intent = await ai.extractSessionIntent(transcript);
 
     // Suggest existing patients by name — manual selection only (§19).
-    const candidates = intent.patientName
+    const matched = intent.patientName
       ? await prisma.patient.findMany({
           where: {
             therapistId: session.sub,
             status: "ACTIVE",
             fullName: { contains: intent.patientName, mode: "insensitive" },
           },
-          select: { id: true, fullName: true },
+          select: { id: true, firstName: true, lastName: true },
           take: 10,
         })
       : [];
+    // Show only the privacy-preserving label in the confirmation list.
+    const candidates = matched.map((p) => ({
+      id: p.id,
+      fullName: patientDisplayName(p),
+    }));
 
     return { transcript, intent, candidates };
   } catch {

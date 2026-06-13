@@ -32,6 +32,20 @@ export function toDatetimeLocal(d: Date): string {
   )}:${pad(d.getMinutes())}`;
 }
 
+/**
+ * Privacy-preserving patient label: full first name + first letter of the
+ * last name (e.g. "אוריה ג."). The full name is never shown in lists, the
+ * calendar, search, or session views — only after re-authentication on the
+ * patient's own personal-data panel.
+ */
+export function patientDisplayName(p: {
+  firstName: string;
+  lastName: string;
+}): string {
+  const initial = p.lastName?.trim() ? ` ${p.lastName.trim().charAt(0)}.` : "";
+  return `${p.firstName ?? ""}${initial}`.trim();
+}
+
 export const SESSION_STATUS_LABELS: Record<string, string> = {
   SCHEDULED: "מתוכנן",
   COMPLETED: "הושלם",

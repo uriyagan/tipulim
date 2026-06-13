@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { PATIENT_STATUS_LABELS } from "@/lib/format";
+import { PATIENT_STATUS_LABELS, patientDisplayName } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +76,7 @@ export default async function PatientsPage({
                 className="card flex items-center justify-between hover:border-brand-300"
               >
                 <div>
-                  <div className="font-medium text-slate-900">{p.fullName}</div>
+                  <div className="font-medium text-slate-900">{patientDisplayName(p)}</div>
                   <div className="text-xs text-slate-500">
                     {p._count.sessions} מפגשים
                   </div>

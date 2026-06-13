@@ -52,7 +52,8 @@ export default async function EditPatientPage({
         submitLabel="שמירת שינויים"
         requiresReauth
         initial={{
-          fullName: patient.fullName,
+          firstName: patient.firstName,
+          lastName: patient.lastName,
           phone: decrypt(patient.phoneEnc) ?? "",
           email: decrypt(patient.emailEnc) ?? "",
         }}

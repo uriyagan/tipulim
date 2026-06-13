@@ -6,6 +6,7 @@ import {
   formatDate,
   formatTime,
   toDatetimeLocal,
+  patientDisplayName,
   SESSION_STATUS_LABELS,
   SESSION_STATUS_STYLES,
 } from "@/lib/format";
@@ -30,7 +31,7 @@ export default async function SessionPage({
   const therapySession = await prisma.therapySession.findFirst({
     where: { id, therapistId: session.sub },
     include: {
-      patient: { select: { id: true, fullName: true } },
+      patient: { select: { id: true, firstName: true, lastName: true } },
       notes: { orderBy: { createdAt: "desc" } },
       aiSummary: true,
       aiJob: true,
@@ -47,7 +48,7 @@ export default async function SessionPage({
           href={`/patients/${s.patient.id}`}
           className="text-sm text-brand-600"
         >
-          ← {s.patient.fullName}
+          ← {patientDisplayName(s.patient)}
         </Link>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">

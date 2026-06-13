@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isCalendarConfigured } from "@/lib/calendar/sync";
+import { patientDisplayName } from "@/lib/format";
 import CalendarView from "@/components/CalendarView";
 
 export const dynamic = "force-dynamic";
@@ -54,12 +55,12 @@ export default async function CalendarPage({
       sessionDate: { gte: start, lt: end },
     },
     orderBy: { sessionDate: "asc" },
-    include: { patient: { select: { fullName: true } } },
+    include: { patient: { select: { firstName: true, lastName: true } } },
   });
 
   const events = sessions.map((s) => ({
     id: s.id,
-    title: `${s.patient.fullName} #${s.sessionNumber}`,
+    title: `${patientDisplayName(s.patient)} #${s.sessionNumber}`,
     dateISO: s.sessionDate.toISOString(),
     durationMin: s.durationMin,
     status: s.status,

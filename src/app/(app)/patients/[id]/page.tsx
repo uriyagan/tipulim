@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import {
   formatDate,
   formatTime,
+  patientDisplayName,
   PATIENT_STATUS_LABELS,
   SESSION_STATUS_LABELS,
   SESSION_STATUS_STYLES,
@@ -48,7 +49,7 @@ export default async function PatientPage({
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-slate-900">
-              {patient.fullName}
+              {patientDisplayName(patient)}
             </h1>
             <span className="badge bg-slate-100 text-slate-600">
               {PATIENT_STATUS_LABELS[patient.status]}
