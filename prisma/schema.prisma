@@ -1,0 +1,214 @@
+// Therapy Practice Management System — data model
+// Core design principle (PRD §4): the system is centered on the TherapySession entity.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Roles & users
+// RBAC is modeled from day one even though only THERAPIST is active (PRD §3.2).
+// ---------------------------------------------------------------------------
+
+enum Role {
+  THERAPIST
+  CLINIC_ADMIN
+  STAFF
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  fullName     String
+  role         Role     @default(THERAPIST)
+
+  // 2FA scaffolding (future-ready, PRD §15.1)
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  patients  Patient[]
+  sessions  TherapySession[]
+  auditLogs AuditLog[]
+
+  @@index([role])
+}
+
+// ---------------------------------------------------------------------------
+// Patient
+// Personal data (phone, email) is encrypted at rest (PRD §5.1, §6, §15.4).
+// Archive is preferred over deletion (PRD §6).
+// ---------------------------------------------------------------------------
+
+enum PatientStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+model Patient {
+  id        String        @id @default(cuid())
+  fullName  String
+  // Encrypted (AES-256-GCM) blobs — never stored in plaintext.
+  phoneEnc  String?
+  emailEnc  String?
+  status    PatientStatus @default(ACTIVE)
+
+  // Owning therapist — basis for future multi-therapist tenancy (PRD §21).
+  therapistId String
+  therapist   User   @relation(fields: [therapistId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions TherapySession[]
+
+  @@index([therapistId, status])
+  @@index([fullName])
+}
+
+// ---------------------------------------------------------------------------
+// Therapy Session (core entity, PRD §5.2)
+// ---------------------------------------------------------------------------
+
+enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  MISSING_NOTE
+  PROCESSING_AI
+}
+
+enum InvoiceStatus {
+  NOT_ISSUED
+  ISSUED
+  VIEWED
+}
+
+model TherapySession {
+  id String @id @default(cuid())
+
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  // Owning therapist, denormalized for fast scoping & future tenancy.
+  therapistId String
+  therapist   User   @relation(fields: [therapistId], references: [id], onDelete: Cascade)
+
+  sessionDate   DateTime // actual therapy date
+  durationMin   Int      @default(50)
+  sessionNumber Int // sequential per patient
+
+  status        SessionStatus @default(SCHEDULED)
+  invoiceStatus InvoiceStatus @default(NOT_ISSUED)
+  // External invoice reference from a pluggable provider (PRD §13).
+  invoiceExternalId String?
+
+  tags String[] @default([])
+
+  // External calendar linkage (PRD §12 Google Calendar sync — Phase 2).
+  externalCalendarId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notes      SessionNote[]
+  aiSummary  AiSummary?
+  aiJob      AiProcessingJob?
+
+  @@unique([patientId, sessionNumber])
+  @@index([therapistId, sessionDate])
+  @@index([patientId, sessionDate])
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// Session Note (PRD §5.3, §9)
+// ---------------------------------------------------------------------------
+
+enum NoteSource {
+  MANUAL
+  AI_VOICE
+}
+
+model SessionNote {
+  id        String         @id @default(cuid())
+  sessionId String
+  session   TherapySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  source  NoteSource @default(MANUAL)
+  content String // final structured note
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sessionId])
+}
+
+// ---------------------------------------------------------------------------
+// AI artifacts (PRD §8, §10)
+// Voice recordings & transcripts are NEVER persisted — only this job's
+// lifecycle metadata is, so the UI can reflect processing state.
+// ---------------------------------------------------------------------------
+
+enum AiJobStatus {
+  PENDING
+  TRANSCRIBING
+  SUMMARIZING
+  COMPLETED
+  FAILED
+}
+
+model AiProcessingJob {
+  id        String         @id @default(cuid())
+  sessionId String         @unique
+  session   TherapySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  status AiJobStatus @default(PENDING)
+  error  String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  @@index([status])
+}
+
+// Interim, session-level structured summary (PRD §10).
+model AiSummary {
+  id        String         @id @default(cuid())
+  sessionId String         @unique
+  session   TherapySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  keyTopics         String[] @default([])
+  emotionalState    String?
+  progressIndicators String?
+  observations      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Audit Log (PRD §5.5, §15.6)
+// Stores ONLY metadata — never sensitive content, never identifiers.
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actionType String
+  entityType String?
+  entityId   String? // non-sensitive id reference only
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
+}

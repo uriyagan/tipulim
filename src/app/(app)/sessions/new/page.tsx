@@ -1,0 +1,36 @@
+import Link from "next/link";
+import { requireSession } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { toDatetimeLocal } from "@/lib/format";
+import SessionForm from "@/components/SessionForm";
+
+export const dynamic = "force-dynamic";
+
+export default async function NewSessionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ patientId?: string }>;
+}) {
+  const session = await requireSession();
+  const { patientId } = await searchParams;
+
+  const patients = await prisma.patient.findMany({
+    where: { therapistId: session.sub, status: "ACTIVE" },
+    orderBy: { fullName: "asc" },
+    select: { id: true, fullName: true },
+  });
+
+  return (
+    <div className="mx-auto max-w-lg space-y-4">
+      <Link href="/calendar" className="text-sm text-brand-600">
+        ← חזרה ליומן
+      </Link>
+      <h1 className="text-2xl font-bold text-slate-900">מפגש חדש</h1>
+      <SessionForm
+        patients={patients}
+        defaultPatientId={patientId}
+        defaultDate={toDatetimeLocal(new Date())}
+      />
+    </div>
+  );
+}
