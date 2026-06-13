@@ -1,10 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
+import { decrypt } from "@/lib/crypto";
 import { audit } from "@/lib/audit";
 import { getAiProvider } from "@/lib/ai";
+import { syncSessionToCalendar } from "@/lib/calendar/sync";
 import { patientDisplayName } from "@/lib/format";
 
 export type AiActionState = { error?: string; ok?: boolean };
@@ -166,19 +169,41 @@ export async function generateInterimSummaryAction(
   }
 }
 
-export interface VoiceIntentResult {
-  error?: string;
-  transcript?: string;
-  intent?: { patientName: string | null; date: string | null };
-  candidates?: { id: string; fullName: string }[];
+// Partial contact hints shown on the confirmation screen so the therapist can
+// disambiguate the patient WITHOUT exposing full personal data (PRD §19).
+function phoneHint(p: string | null): string | null {
+  if (!p) return null;
+  const digits = p.replace(/\D/g, "");
+  return digits.length >= 4 ? "•••" + digits.slice(-4) : "•••";
+}
+function emailHint(e: string | null): string | null {
+  if (!e) return null;
+  const [user, domain] = e.split("@");
+  if (!domain) return "•••";
+  return `${user?.[0] ?? ""}•••@${domain}`;
 }
 
-// PRD §7B — AI-assisted session creation, step 1: extract intent + suggest
-// patient matches. NEVER creates anything (PRD §22) — returns suggestions only.
-export async function extractVoiceIntentAction(
-  _prev: VoiceIntentResult,
+export interface VoiceSummaryResult {
+  error?: string;
+  intent?: { patientName: string | null; date: string | null };
+  candidates?: {
+    id: string;
+    name: string;
+    phoneHint: string | null;
+    emailHint: string | null;
+  }[];
+  // The final structured summary, ready to be filed once the therapist
+  // confirms the patient + session date. Transcript & audio are discarded.
+  summaryContent?: string;
+}
+
+// PRD §7B/§8/§19 — Record a session recap: transcribe → extract who/when →
+// generate the structured summary. NOTHING is saved yet; the therapist must
+// confirm the patient and date first (PRD §22).
+export async function prepareVoiceSummaryAction(
+  _prev: VoiceSummaryResult,
   formData: FormData,
-): Promise<VoiceIntentResult> {
+): Promise<VoiceSummaryResult> {
   const session = await requireSession();
 
   const file = formData.get("audio");
@@ -190,11 +215,15 @@ export async function extractVoiceIntentAction(
   }
 
   let audio: Buffer | null = Buffer.from(await file.arrayBuffer());
+  let transcript: string | null = null;
   try {
     const ai = getAiProvider();
-    const transcript = await ai.transcribeAudio(audio, file.type || "audio/webm");
+    transcript = await ai.transcribeAudio(audio, file.type || "audio/webm");
     audio = null;
+
     const intent = await ai.extractSessionIntent(transcript);
+    const note = await ai.summarizeToNote(transcript);
+    transcript = null; // never persisted (§16)
 
     // Suggest existing patients by name — manual selection only (§19).
     const matched = intent.patientName
@@ -204,19 +233,135 @@ export async function extractVoiceIntentAction(
             status: "ACTIVE",
             fullName: { contains: intent.patientName, mode: "insensitive" },
           },
-          select: { id: true, firstName: true, lastName: true },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phoneEnc: true,
+            emailEnc: true,
+          },
           take: 10,
         })
       : [];
-    // Show only the privacy-preserving label in the confirmation list.
     const candidates = matched.map((p) => ({
       id: p.id,
-      fullName: patientDisplayName(p),
+      name: patientDisplayName(p),
+      phoneHint: phoneHint(decrypt(p.phoneEnc)),
+      emailHint: emailHint(decrypt(p.emailEnc)),
     }));
 
-    return { transcript, intent, candidates };
+    return {
+      intent: { patientName: intent.patientName, date: intent.date },
+      candidates,
+      summaryContent: note.content,
+    };
   } catch {
     audio = null;
+    transcript = null;
     return { error: "עיבוד ההקלטה נכשל" };
   }
+}
+
+// Step 2 — file the confirmed summary into the patient's session for that day
+// (creating the session if it doesn't exist yet), then generate the interim
+// summary. Only the final summary is stored (PRD §8, §16).
+export async function saveVoiceSummaryAction(
+  _prev: AiActionState,
+  formData: FormData,
+): Promise<AiActionState> {
+  const session = await requireSession();
+
+  const patientId = String(formData.get("patientId") ?? "");
+  const sessionDate = String(formData.get("sessionDate") ?? "");
+  const summaryContent = String(formData.get("summaryContent") ?? "").trim();
+  if (!patientId || !sessionDate || !summaryContent) {
+    return { error: "חסרים פרטים לשמירה" };
+  }
+
+  const patient = await prisma.patient.findFirst({
+    where: { id: patientId, therapistId: session.sub },
+    select: { id: true },
+  });
+  if (!patient) return { error: "מטופל לא נמצא" };
+
+  const when = new Date(sessionDate);
+  if (Number.isNaN(when.getTime())) return { error: "תאריך לא תקין" };
+
+  // Attach to the patient's session on that calendar day, or create one.
+  const dayStart = new Date(when);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayEnd.getDate() + 1);
+
+  const existing = await prisma.therapySession.findFirst({
+    where: {
+      patientId,
+      therapistId: session.sub,
+      sessionDate: { gte: dayStart, lt: dayEnd },
+    },
+    orderBy: { sessionDate: "asc" },
+    select: { id: true },
+  });
+
+  let sessionId: string;
+  if (existing) {
+    sessionId = existing.id;
+  } else {
+    const last = await prisma.therapySession.findFirst({
+      where: { patientId },
+      orderBy: { sessionNumber: "desc" },
+      select: { sessionNumber: true },
+    });
+    const created = await prisma.therapySession.create({
+      data: {
+        patientId,
+        therapistId: session.sub,
+        sessionDate: when,
+        durationMin: 50,
+        sessionNumber: (last?.sessionNumber ?? 0) + 1,
+        tags: [],
+        status: "SCHEDULED",
+      },
+    });
+    sessionId = created.id;
+    await syncSessionToCalendar(sessionId).catch(() => {});
+  }
+
+  let summary = null;
+  try {
+    summary = await getAiProvider().interimSummary(summaryContent);
+  } catch {
+    summary = null;
+  }
+
+  await prisma.$transaction([
+    prisma.sessionNote.create({
+      data: { sessionId, content: summaryContent, source: "AI_VOICE" },
+    }),
+    ...(summary
+      ? [
+          prisma.aiSummary.upsert({
+            where: { sessionId },
+            create: { sessionId, ...summary },
+            update: { ...summary },
+          }),
+        ]
+      : []),
+    prisma.therapySession.update({
+      where: { id: sessionId },
+      data: { status: "COMPLETED" },
+    }),
+  ]);
+
+  await audit({
+    action: "ai.voice_process",
+    userId: session.sub,
+    entityType: "TherapySession",
+    entityId: sessionId,
+  });
+
+  revalidatePath(`/sessions/${sessionId}`);
+  revalidatePath(`/patients/${patientId}`);
+  revalidatePath("/calendar");
+  redirect(`/sessions/${sessionId}`);
 }

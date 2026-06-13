@@ -13,9 +13,10 @@ export default async function VoiceSessionPage() {
         ← יצירה ידנית
       </Link>
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">מפגש מהקלטה</h1>
+        <h1 className="text-2xl font-bold text-slate-900">תיעוד מפגש מהקלטה</h1>
         <p className="text-sm text-slate-500">
-          יצירת מפגש בעזרת AI — עם אישור ידני לפני שמירה.
+          הקלטת סיכום של מפגש שהתקיים — תמלול וסיכום ב‑AI, ושיוך לתיק המטופל
+          לאחר אישור ידני.
         </p>
       </div>
       <VoiceSessionWizard aiConfigured={isAiConfigured()} />

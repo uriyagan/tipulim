@@ -28,7 +28,7 @@ export default async function NewSessionPage({
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-2xl font-bold text-slate-900">מפגש חדש</h1>
         <Link href="/sessions/voice" className="btn-secondary">
-          🎙️ מהקלטה (AI)
+          🎙️ תיעוד מהקלטה (AI)
         </Link>
       </div>
       <SessionForm
